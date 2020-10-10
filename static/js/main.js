@@ -1,6 +1,34 @@
 var Search = function() {
-  console.log($("#search-word").val());
+  const data = {action:"search", parameters:[$("#search-word").val()]}
+  request(data, (res)=>{
+    showInfoMessage(res.data);
+  }, onerror);
 }
+var onError = function(e) {
+  if (!!e.responseJSON) {
+    console.log(e.responseJSON.message);
+    showDangerMessage(e.responseJSON.message);
+  } else {
+    console.log(e.message);
+    showDangerMessage(e.message);
+  }
+};
+var request = function(data, callback, onerror) {
+  $.ajax({
+    type:          'POST',
+    dataType:      'json',
+    contentType:   'application/json',
+    scriptCharset: 'utf-8',
+    data:          JSON.stringify(data),
+    url:           "./action"
+  })
+  .done(function(res) {
+    callback(res);
+  })
+  .fail(function(e) {
+    onerror(e);
+  });
+};
 var showDangerMessage = function(str) {
   $("#message-danger").text(str);
   $("#message-danger-container").removeClass("hide");
