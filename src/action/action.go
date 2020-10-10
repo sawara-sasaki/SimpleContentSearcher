@@ -6,8 +6,8 @@ import (
 )
 
 type ActionRequest struct {
-	Action     string    `json:"action"`
-	Parameters []float64 `json:"parameters"`
+	Action     string   `json:"action"`
+	Parameters []string `json:"parameters"`
 }
 
 type ActionResponse struct {
