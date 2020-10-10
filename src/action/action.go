@@ -33,7 +33,7 @@ func Handle(request []byte)(ActionResponse, error) {
 	return res, err
 }
 
-func Search(word string) []string {
+func Search(word string) []interface{} {
 	var res []interface{}
 	switch word {
 	case "match":
