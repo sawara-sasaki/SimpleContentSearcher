@@ -11,7 +11,7 @@ import (
 	"encoding/json"
 	"path/filepath"
 
-	"github.com/sawara-sasaki/SimpleJsonEditor/src/action"
+	"github.com/sawara-sasaki/SimpleContentSearcher/src/action"
 )
 
 func main() {
