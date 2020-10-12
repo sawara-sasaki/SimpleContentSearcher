@@ -33,8 +33,8 @@ var showDangerMessage = function(str) {
   $("#message-danger").text(str);
   $("#message-danger-container").removeClass("hide");
 }
-var showInfoMessage = function(str) {
-  $("#message-info").text(str);
+var showInfoMessage = function(elmList) {
+  elmList.forEach(elm => $("#message-info").append("<p>" + elm + "</p>"));
   $("#message-info-container").removeClass("hide");
 }
 var CloseMessage = function(elm) {
