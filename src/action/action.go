@@ -64,7 +64,7 @@ func Search(url string)([]interface{}, error) {
 			if len(text) < 1 {
 				text = "_"
 			}
-			res = append(res, text + "(" + url_ + ")")
+			res = append(res, "<a href='" + url_ + "' target='_blank'>" + text + "</a>")
 		}
 	})
 	doc.Find("body img").Each(func(i int, s *goquery.Selection) {
@@ -74,7 +74,7 @@ func Search(url string)([]interface{}, error) {
 			if len(alt) < 1 {
 				alt = "_"
 			}
-			res = append(res, alt + "(" + url_ + ")")
+			res = append(res, "<a href='" + url_ + "' target='_blank'>" + alt + "</a>")
 		}
 	})
 	return res, nil
