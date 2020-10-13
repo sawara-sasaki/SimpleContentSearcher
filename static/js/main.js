@@ -44,3 +44,13 @@ var showInfoMessage = function(elmList) {
 var CloseMessage = function(elm) {
   $(elm).parent().addClass("hide");
 }
+$(function(){
+  $("input"). keydown(function(e) {
+    if ((e.which && e.which === 13) || (e.keyCode && e.keyCode === 13)) {
+      Search();
+      return false;
+    } else {
+      return true;
+    }
+  });
+});
