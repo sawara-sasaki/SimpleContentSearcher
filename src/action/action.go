@@ -93,7 +93,7 @@ func Search(param string)([]interface{}, error) {
 			for _, v := range tmpSlice {
 				if videoId, ok_ := GetStringFromInterface(v.(map[string]interface{}), []interface{}{"gridVideoRenderer","videoId"}); ok_ {
 					if title, ok__ := GetStringFromInterface(v.(map[string]interface{}), []interface{}{"gridVideoRenderer", "title", "runs", 0, "text"}); ok__ {
-						res = append(res, "<a href='https://www.youtube.com/watch?v=" + videoId + "' target='_blank'>" + title + "</a>")
+						res = append(res, "<a href='/player.html?v=" + videoId + "' target='_blank'>" + title + "</a>")
 					}
 				}
 			}
