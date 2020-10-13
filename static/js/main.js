@@ -1,7 +1,11 @@
 var Search = function() {
   const data = {action:"search", parameters:[$("#search-word").val()]}
   request(data, (res)=>{
-    showInfoMessage(res.data);
+    if(res.data.length > 0) {
+      showInfoMessage(res.data);
+    } else {
+      showDangerMessage("No Data.");
+    }
   }, onerror);
 }
 var onError = function(e) {

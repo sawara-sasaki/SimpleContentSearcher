@@ -1,4 +1,4 @@
-module github.com/sawara-sasaki/SimpleContentSearcher/src/action
+module github.com/sawara-sasaki/SimpleContentSearcher/blob/yt/src/action
 
 go 1.15
 
