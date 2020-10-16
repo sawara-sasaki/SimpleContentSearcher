@@ -49,6 +49,9 @@ $(function(){
     if ((e.which && e.which === 13) || (e.keyCode && e.keyCode === 13)) {
       Search();
       return false;
+    } else if ((e.which && e.which === 27) || (e.keyCode && e.keyCode === 27)) {
+      $('#main-form').submit();
+      return false;
     } else {
       return true;
     }
