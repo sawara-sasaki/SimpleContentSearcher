@@ -60,20 +60,22 @@ func Search(param string)([]interface{}, error) {
 	if err != nil {
 		return res, err
 	}
+	var baseSlice []interface{}
+	var idSlice []interface{}
+	var titleSlice []interface{}
 	var ytInitialData string
-	doc.Find("body script").Each(func(i int, s *goquery.Selection) {
-		text := s.Text()
-		if len(text) > 0 && strings.HasPrefix(strings.TrimSpace(text), "window[\"ytInitialData\"]") {
-			ytInitialData = strings.TrimSpace(text)[26:]
+	if strings.HasPrefix(param, "https://www.youtube.com/watch?v") {
+		baseSlice = []interface{}{
+			"contents",
+			"twoColumnWatchNextResults",
+			"secondaryResults",
+			"secondaryResults",
+			"results",
 		}
-	})
-	if len(ytInitialData) > 0 {
-		tmp := strings.Split(ytInitialData,"\n")[0]
-		var tmpMap map[string]interface{}
-		if err := json.Unmarshal([]byte(tmp[0:len(tmp)-1]), &tmpMap); err != nil {
-			return res, err
-		}
-		slice := []interface{}{
+		idSlice = []interface{}{"compactVideoRenderer","videoId"}
+		titleSlice = []interface{}{"compactVideoRenderer", "title", "simpleText"}
+	} else {
+		baseSlice = []interface{}{
 			"contents",
 			"twoColumnBrowseResultsRenderer",
 			"tabs",
@@ -89,11 +91,26 @@ func Search(param string)([]interface{}, error) {
 			"gridRenderer",
 			"items",
 		}
-		if tmpSlice, ok := GetSliceInterface(tmpMap, slice); ok {
+		idSlice = []interface{}{"gridVideoRenderer","videoId"}
+		titleSlice = []interface{}{"gridVideoRenderer", "title", "runs", 0, "text"}
+	}
+	doc.Find("body script").Each(func(i int, s *goquery.Selection) {
+		text := s.Text()
+		if len(text) > 0 && strings.HasPrefix(strings.TrimSpace(text), "window[\"ytInitialData\"]") {
+			ytInitialData = strings.TrimSpace(text)[26:]
+		}
+	})
+	if len(ytInitialData) > 0 {
+		tmp := strings.Split(ytInitialData,";")[0]
+		var tmpMap map[string]interface{}
+		if err := json.Unmarshal([]byte(tmp), &tmpMap); err != nil {
+			return res, err
+		}
+		if tmpSlice, ok := GetSliceInterface(tmpMap, baseSlice); ok {
 			for _, v := range tmpSlice {
-				if videoId, ok_ := GetStringFromInterface(v.(map[string]interface{}), []interface{}{"gridVideoRenderer","videoId"}); ok_ {
-					if title, ok__ := GetStringFromInterface(v.(map[string]interface{}), []interface{}{"gridVideoRenderer", "title", "runs", 0, "text"}); ok__ {
-						res = append(res, "<a href='/player.html?v=" + videoId + "' target='_blank'>" + title + "</a>")
+				if videoId, ok_ := GetStringFromInterface(v.(map[string]interface{}), idSlice); ok_ {
+					if title, ok__ := GetStringFromInterface(v.(map[string]interface{}), titleSlice); ok__ {
+						res = append(res, "<a href='/player.html?v=" + videoId + "'>" + title + "</a>")
 					}
 				}
 			}
@@ -105,7 +122,12 @@ func Search(param string)([]interface{}, error) {
 func GetStringFromInterface(i map[string]interface{}, slice []interface{})(string, bool) {
 	last := slice[len(slice)-1].(string)
 	result, ok := GetMapInterface(i, slice[:len(slice)-1])
-	return result[last].(string), ok
+	if !ok {
+		return "", false
+	} else if _, ok_ := result[last]; !ok_ {
+		return "", false
+	}
+	return result[last].(string), true
 }
 
 func GetMapInterface(i map[string]interface{}, slice []interface{})(map[string]interface{}, bool) {
@@ -152,9 +174,17 @@ func ConvertInterface(itfMap map[string]interface{}, itfSlice []interface{}, idx
 	var current interface{}
 	switch idx.(type){
 	case int:
-		current = itfSlice[idx.(int)]
+		if len(itfSlice) > idx.(int) {
+			current = itfSlice[idx.(int)]
+		} else {
+			return nextMap, nextSlice, false
+		}
 	case string:
-		current = itfMap[idx.(string)]
+		if c, ok := itfMap[idx.(string)]; ok {
+			current = c
+		} else {
+			return nextMap, nextSlice, false
+		}
 	default:
 		return nextMap, nextSlice, false
 	}

@@ -11,5 +11,12 @@ $(function(){
       qo[pn] = pv;
     }
   }
-  console.log(qo);
+  const data = {action:"search", parameters:["https://www.youtube.com/watch?v="+qo["v"]]}
+  request(data, (res)=>{
+    if(res.data.length > 0) {
+      showInfoMessage(res.data);
+    } else {
+      showDangerMessage("No Data.");
+    }
+  }, onerror);
 });

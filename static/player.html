@@ -6,13 +6,32 @@
     <title>YT Player</title>
     <link rel="shortcut icon" href="img/favicon.ico">
     <script src="https://code.jquery.com/jquery-3.5.1.min.js" integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0=" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" integrity="sha384-JcKb8q3iqJ61gNV9KGb8thSsNjpSL0n8PARn9HuZOnIxN0hoP+VmmDGMN5t9UJ0Z" crossorigin="anonymous">
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js" integrity="sha384-B4gt1jrGC7Jh4AgTPSdUtOBvfO8shuf57BaghqFfPlYxofvL8/KUEfYiJOMMV+rV" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.1.0/css/all.css" integrity="sha384-lKuwvrZot6UHsBSfcMvOkWwlCMgc0TaWr+30HWe3a4ltaBwTZhyTEggF5tJv8tbt" crossorigin="anonymous">
+    <link rel="stylesheet" type="text/css" href="css/main.css">
+    <script type="text/javascript" src="js/main.js"></script>
     <link rel="stylesheet" type="text/css" href="css/player.css">
     <script type="text/javascript" src="js/player.js"></script>
   </head>
   <body>
-    <div id="main-container">
-      <div id="main-content" >
+    <div id="player-container">
+      <div id="player-content" >
         <div id="ytplayer"></div>
+      </div>
+    </div>
+    <div id="sub-container">
+      <div id="message-danger-container" class="alert alert-danger hide" role="alert">
+        <span id="message-danger"></span>
+        <div class="close" aria-label="Close" onclick="CloseMessage(this);">
+          <span aria-hidden="true">&times;</span>
+        </div>
+      </div>
+      <div id="message-info-container" class="alert alert-info hide" role="alert">
+        <span id="message-info"></span>
+        <div class="close" aria-label="Close" onclick="CloseMessage(this);">
+          <span aria-hidden="true">&times;</span>
+        </div>
       </div>
     </div>
     <script>

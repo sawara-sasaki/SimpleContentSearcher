@@ -27,3 +27,11 @@ func TestSearchFailed(t *testing.T) {
 		t.Fatal("failed test")
 	}
 }
+
+func TestSearchFailed2(t *testing.T) {
+	result, _ := Search("https://www.youtube.com/watch?v=ZRCdORJiUgU")
+	incorrectValue := (interface{})("match!")
+	if result[0] == incorrectValue {
+		t.Fatal("failed test")
+	}
+}
