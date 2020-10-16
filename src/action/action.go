@@ -45,7 +45,7 @@ func Search(param string)([]interface{}, error) {
 		return res, nil
 	}
 	if !strings.HasPrefix(param, "https://www.youtube.com/") {
-		param = "https://www.youtube.com/" + param + "/videos"
+		param = "https://www.youtube.com/results?search_query=" + param
 	}
 	req, err := http.NewRequest("GET", param, nil)
 	if err != nil {
@@ -60,22 +60,81 @@ func Search(param string)([]interface{}, error) {
 	if err != nil {
 		return res, err
 	}
-	var baseSlice []interface{}
-	var idSlice []interface{}
-	var titleSlice []interface{}
+	baseSlice, idSlice, titleSlice := GetInterfaceSlice(param)
 	var ytInitialData string
+	doc.Find("body script").Each(func(i int, s *goquery.Selection) {
+		text := s.Text()
+		if len(text) > 0 && strings.HasPrefix(strings.TrimSpace(text), "// scraper_data_begin") {
+			text = strings.TrimSpace(text)[21:]
+		}
+		if len(text) > 0 && strings.HasPrefix(strings.TrimSpace(text), "window[\"ytInitialData\"]") {
+			ytInitialData = strings.TrimSpace(text)[26:]
+		} else if len(text) > 0 && strings.HasPrefix(strings.TrimSpace(text), "var ytInitialData") {
+			ytInitialData = strings.TrimSpace(text)[20:]
+		}
+	})
+	if len(ytInitialData) > 0 {
+		tmp := strings.Split(ytInitialData,"};")[0]
+		var tmpMap map[string]interface{}
+		if err := json.Unmarshal([]byte(tmp + "}"), &tmpMap); err != nil {
+			return res, err
+		}
+		if tmpSlice, ok := GetSliceInterface(tmpMap, baseSlice); ok {
+			for _, v := range tmpSlice {
+				if videoId, ok_ := GetStringFromInterface(v.(map[string]interface{}), idSlice); ok_ {
+					if title, ok__ := GetStringFromInterface(v.(map[string]interface{}), titleSlice); ok__ {
+						res = append(res, "<a href='/player.html?v=" + videoId + "'>" + title + "</a>")
+					}
+				}
+			}
+		}
+	}
+	return res, nil
+}
+
+func GetInterfaceSlice(param string)([]interface{}, []interface{}, []interface{}) {
 	if strings.HasPrefix(param, "https://www.youtube.com/watch?v") {
-		baseSlice = []interface{}{
+		return []interface{}{
 			"contents",
 			"twoColumnWatchNextResults",
 			"secondaryResults",
 			"secondaryResults",
 			"results",
+		}, []interface{}{
+			"compactVideoRenderer",
+			"videoId",
+		}, []interface{}{
+			"compactVideoRenderer",
+			"title",
+			"simpleText",
 		}
-		idSlice = []interface{}{"compactVideoRenderer","videoId"}
-		titleSlice = []interface{}{"compactVideoRenderer", "title", "simpleText"}
+	} else if strings.HasPrefix(param, "https://www.youtube.com/results?search_query") {
+		return []interface{}{
+			"contents",
+			"twoColumnSearchResultsRenderer",
+			"primaryContents",
+			"sectionListRenderer",
+			"contents",
+			0,
+			"itemSectionRenderer",
+			"contents",
+			2,
+			"shelfRenderer",
+			"content",
+			"verticalListRenderer",
+			"items",
+		}, []interface{}{
+			"videoRenderer",
+			"videoId",
+		}, []interface{}{
+			"videoRenderer",
+			"title",
+			"runs",
+			0,
+			"text",
+		}
 	} else {
-		baseSlice = []interface{}{
+		return []interface{}{
 			"contents",
 			"twoColumnBrowseResultsRenderer",
 			"tabs",
@@ -90,33 +149,17 @@ func Search(param string)([]interface{}, error) {
 			0,
 			"gridRenderer",
 			"items",
-		}
-		idSlice = []interface{}{"gridVideoRenderer","videoId"}
-		titleSlice = []interface{}{"gridVideoRenderer", "title", "runs", 0, "text"}
-	}
-	doc.Find("body script").Each(func(i int, s *goquery.Selection) {
-		text := s.Text()
-		if len(text) > 0 && strings.HasPrefix(strings.TrimSpace(text), "window[\"ytInitialData\"]") {
-			ytInitialData = strings.TrimSpace(text)[26:]
-		}
-	})
-	if len(ytInitialData) > 0 {
-		tmp := strings.Split(ytInitialData,";")[0]
-		var tmpMap map[string]interface{}
-		if err := json.Unmarshal([]byte(tmp), &tmpMap); err != nil {
-			return res, err
-		}
-		if tmpSlice, ok := GetSliceInterface(tmpMap, baseSlice); ok {
-			for _, v := range tmpSlice {
-				if videoId, ok_ := GetStringFromInterface(v.(map[string]interface{}), idSlice); ok_ {
-					if title, ok__ := GetStringFromInterface(v.(map[string]interface{}), titleSlice); ok__ {
-						res = append(res, "<a href='/player.html?v=" + videoId + "'>" + title + "</a>")
-					}
-				}
-			}
+		}, []interface{}{
+			"gridVideoRenderer",
+			"videoId",
+		}, []interface{}{
+			"gridVideoRenderer",
+			"title",
+			"runs",
+			0,
+			"text",
 		}
 	}
-	return res, nil
 }
 
 func GetStringFromInterface(i map[string]interface{}, slice []interface{})(string, bool) {
