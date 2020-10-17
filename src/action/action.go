@@ -77,5 +77,8 @@ func Search(param string)([]interface{}, error) {
 			res = append(res, "<a href='" + url_ + "' target='_blank'>" + alt + "</a>")
 		}
 	})
+	doc.Find("body div").Each(func(i int, s *goquery.Selection) {
+		res = append(res, s.Text())
+	})
 	return res, nil
 }
