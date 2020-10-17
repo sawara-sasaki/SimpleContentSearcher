@@ -60,39 +60,45 @@ func Search(param string)([]interface{}, error) {
 	if err != nil {
 		return res, err
 	}
-	baseSlice, idSlice, titleSlice := GetInterfaceSlice(param)
 	var ytInitialData string
 	doc.Find("body script").Each(func(i int, s *goquery.Selection) {
-		text := s.Text()
-		if len(text) > 0 && strings.HasPrefix(strings.TrimSpace(text), "// scraper_data_begin") {
-			text = strings.TrimSpace(text)[21:]
+		text := strings.TrimSpace(strings.Replace(s.Text(), "\n", "", -1))
+		if len(text) > 0 && strings.HasPrefix(text, "// scraper_data_begin") {
+			text = text[21:]
 		}
-		if len(text) > 0 && strings.HasPrefix(strings.TrimSpace(text), "window[\"ytInitialData\"]") {
-			ytInitialData = strings.TrimSpace(text)[26:]
-		} else if len(text) > 0 && strings.HasPrefix(strings.TrimSpace(text), "var ytInitialData") {
-			ytInitialData = strings.TrimSpace(text)[20:]
+		if len(text) > 0 && strings.HasPrefix(text, "window[\"ytInitialData\"]") {
+			ytInitialData = text[26:]
+		} else if len(text) > 0 && strings.HasPrefix(text, "var ytInitialData") {
+			ytInitialData = text[20:]
 		}
 	})
+
 	if len(ytInitialData) > 0 {
 		tmp := strings.Split(ytInitialData,"};")[0]
 		var tmpMap map[string]interface{}
 		if err := json.Unmarshal([]byte(tmp + "}"), &tmpMap); err != nil {
 			return res, err
 		}
-		if tmpSlice, ok := GetSliceInterface(tmpMap, baseSlice); ok {
-			for _, v := range tmpSlice {
-				if videoId, ok_ := GetStringFromInterface(v.(map[string]interface{}), idSlice); ok_ {
-					if title, ok__ := GetStringFromInterface(v.(map[string]interface{}), titleSlice); ok__ {
-						res = append(res, "<a href='/player.html?v=" + videoId + "'>" + title + "</a>")
+		for idx := 0; idx < 2; idx++ {
+			baseSlice, idSlice, titleSlice := GetInterfaceSlice(param, idx)
+			if tmpSlice, ok := GetSliceInterface(tmpMap, baseSlice); ok {
+				for _, v := range tmpSlice {
+					if videoId, ok_ := GetStringFromInterface(v.(map[string]interface{}), idSlice); ok_ {
+						if title, ok__ := GetStringFromInterface(v.(map[string]interface{}), titleSlice); ok__ {
+							res = append(res, "<a href='/player.html?v=" + videoId + "'>" + title + "</a>")
+						}
 					}
 				}
+			}
+			if !strings.HasPrefix(param, "https://www.youtube.com/results?search_query") || len(res) > 0 {
+				break
 			}
 		}
 	}
 	return res, nil
 }
 
-func GetInterfaceSlice(param string)([]interface{}, []interface{}, []interface{}) {
+func GetInterfaceSlice(param string, pattern int)([]interface{}, []interface{}, []interface{}) {
 	if strings.HasPrefix(param, "https://www.youtube.com/watch?v") {
 		return []interface{}{
 			"contents",
@@ -109,29 +115,54 @@ func GetInterfaceSlice(param string)([]interface{}, []interface{}, []interface{}
 			"simpleText",
 		}
 	} else if strings.HasPrefix(param, "https://www.youtube.com/results?search_query") {
-		return []interface{}{
-			"contents",
-			"twoColumnSearchResultsRenderer",
-			"primaryContents",
-			"sectionListRenderer",
-			"contents",
-			0,
-			"itemSectionRenderer",
-			"contents",
-			2,
-			"shelfRenderer",
-			"content",
-			"verticalListRenderer",
-			"items",
-		}, []interface{}{
-			"videoRenderer",
-			"videoId",
-		}, []interface{}{
-			"videoRenderer",
-			"title",
-			"runs",
-			0,
-			"text",
+		if pattern == 0 {
+			return []interface{}{
+				"contents",
+				"twoColumnSearchResultsRenderer",
+				"primaryContents",
+				"sectionListRenderer",
+				"contents",
+				0,
+				"itemSectionRenderer",
+				"contents",
+				-2,
+				"shelfRenderer",
+				"content",
+				"verticalListRenderer",
+				"items",
+			}, []interface{}{
+				"videoRenderer",
+				"videoId",
+			}, []interface{}{
+				"videoRenderer",
+				"title",
+				"runs",
+				0,
+				"text",
+			}
+		} else {
+			return []interface{}{
+				"contents",
+				"twoColumnSearchResultsRenderer",
+				"primaryContents",
+				"sectionListRenderer",
+				"contents",
+			}, []interface{}{
+				"itemSectionRenderer",
+				"contents",
+				-1,
+				"videoRenderer",
+				"videoId",
+			}, []interface{}{
+				"itemSectionRenderer",
+				"contents",
+				-1,
+				"videoRenderer",
+				"title",
+				"runs",
+				0,
+				"text",
+			}
 		}
 	} else {
 		return []interface{}{
@@ -217,7 +248,19 @@ func ConvertInterface(itfMap map[string]interface{}, itfSlice []interface{}, idx
 	var current interface{}
 	switch idx.(type){
 	case int:
-		if len(itfSlice) > idx.(int) {
+		if idx.(int) < 0 {
+			for idx_, v_ := range itfSlice {
+				for idx__, _ := range v_.(map[string]interface{}) {
+					if next.(string) == idx__ {
+						current = itfSlice[idx_]
+						break
+					}
+				}
+				if current != nil {
+					break
+				}
+			}
+		} else if len(itfSlice) > idx.(int) {
 			current = itfSlice[idx.(int)]
 		} else {
 			return nextMap, nextSlice, false
