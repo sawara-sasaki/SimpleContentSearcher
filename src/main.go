@@ -11,7 +11,7 @@ import (
 	"encoding/json"
 	"path/filepath"
 
-	"github.com/sawara-sasaki/SimpleContentSearcher/src/action"
+	"./action"
 )
 
 func main() {
@@ -48,7 +48,7 @@ func main() {
 		}
 	})
 
-	url := "http://localhost:8081"
+	url := "http://localhost:8082"
 	switch runtime.GOOS {
 	case "linux":
 		err = exec.Command("xdg-open", url).Start()
@@ -60,5 +60,5 @@ func main() {
 		err = fmt.Errorf("unsupported platform")
 	}
 
-	http.ListenAndServe(":8081", nil)
+	http.ListenAndServe(":8082", nil)
 }
