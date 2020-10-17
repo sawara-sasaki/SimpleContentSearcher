@@ -37,14 +37,14 @@ func Handle(request []byte)(ActionResponse, error) {
 	return res, err
 }
 
-func Search(url string)([]interface{}, error) {
+func Search(param string)([]interface{}, error) {
 	var err error
 	var res []interface{}
-	if !strings.HasPrefix(url, "http") {
+	if strings.HasPrefix(param, "http://") {
 		res = append(res, "No match.")
 		return res, nil
 	}
-	req, err := http.NewRequest("GET", url, nil)
+	req, err := http.NewRequest("GET", param, nil)
 	if err != nil {
 		return res, err
 	}
