@@ -28,6 +28,12 @@
         </div>
       </div>
       <div id="message-info-container" class="alert alert-info hide" role="alert">
+        <form>
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" id="auto-play">
+            <label class="form-check-label" for="autoplay">Auto Play</label>
+          </div>
+        </form>
         <span id="message-info"></span>
         <div class="close" aria-label="Close" onclick="CloseMessage(this);">
           <span aria-hidden="true">&times;</span>
@@ -59,12 +65,34 @@
         videoId: qObject["v"],
         events: {
           'onReady': onPlayerReady,
+          'onStateChange': onPlayerStateChange,
         }
       });
     }
     function onPlayerReady(event) {
       event.target.playVideo();
     }
+    function onPlayerStateChange(event) {
+      var ytStatus = event.data;
+      if (ytStatus == YT.PlayerState.ENDED) {
+        playNext();
+      }
+    }
+    function playNext() {
+      if (localStorage.getItem("autoPlay") == "true") {
+        var element = document.getElementById("message-info");
+        location.href = element.firstChild.firstChild.href;
+      }
+    }
+    var autoPlayCheck = document.getElementById("auto-play");
+    if (localStorage.getItem("autoPlay") == "true") {
+      autoPlayCheck.checked = true;
+    } else {
+      autoPlayCheck.checked = false;
+    }
+    autoPlayCheck.onchange = function() {
+      localStorage.setItem('autoPlay', autoPlayCheck.checked);
+    };
     </script>
   </body>
 </html>
