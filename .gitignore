@@ -2,6 +2,8 @@ ContentSearcher
 ContentSearcher.app
 ContentSearcher.exe
 
+webviewCli
+
 go.sum
 
 *.exe~

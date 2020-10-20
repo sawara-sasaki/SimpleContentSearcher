@@ -36,7 +36,18 @@ func main() {
 			io.Copy(buf, body)
 			var res action.ActionResponse
 			var err error
-			res, err = action.Handle(buf.Bytes());
+			req := getActionParam(buf.Bytes())
+
+			cmd := exec.Command(path + "/webViewCli", req.Parameters[0])
+			var stdout bytes.Buffer
+			cmd.Stdout = &stdout
+			err = cmd.Run()
+			if err != nil {
+				fmt.Println(err)
+				os.Exit(1)
+			}
+
+			res, err = action.Handle(req, stdout.String());
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 			} else {
@@ -61,4 +72,10 @@ func main() {
 	}
 
 	http.ListenAndServe(":8082", nil)
+}
+
+func getActionParam(request []byte) action.ActionRequest {
+	var req action.ActionRequest
+	json.Unmarshal(request, &req)
+	return req
 }
