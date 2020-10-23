@@ -41,16 +41,24 @@
       </div>
     </div>
     <script>
-    var qString = window.location.search;
-    var qObject = new Object();
-    if(qString){
-      qString = qString.substring(1);
-      var param = qString.split('&');
-      for (var i = 0; i < param.length; i++) {
-        var el = param[i].split('=');
-        var pName = decodeURIComponent(el[0]);
-        var pValue = decodeURIComponent(el[1]);
-        qObject[pName] = pValue;
+    var videoId = ""
+    var qSearch = window.location.search;
+    if (qSearch.startsWith('?https://www.youtube.com/watch?v=')) {
+      videoId = qSearch.substring(33).split('&')[0];
+    } else {
+      var qObject = new Object();
+      if(qSearch){
+        qSearch = qSearch.substring(1);
+        var param = qSearch.split('&');
+        for (var i = 0; i < param.length; i++) {
+          var el = param[i].split('=');
+          var pName = decodeURIComponent(el[0]);
+          var pValue = decodeURIComponent(el[1]);
+          qObject[pName] = pValue;
+        }
+        if (!!qObject["v"] && qObject["v"].length > 0) {
+          videoId = qObject["v"];
+        }
       }
     }
     var tag = document.createElement('script');
@@ -62,7 +70,7 @@
       player = new YT.Player('ytplayer', {
         height: '360',
         width: '640',
-        videoId: qObject["v"],
+        videoId: videoId,
         events: {
           'onReady': onPlayerReady,
           'onStateChange': onPlayerStateChange,
