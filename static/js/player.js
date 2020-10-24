@@ -28,3 +28,10 @@ $(function(){
     }
   }, onerror);
 });
+var Go = function() {
+  location.href = "/player.html?" + $("#url-input").val();
+}
+var OpenForm = function(elm) {
+  $(elm).parent().addClass("hide");
+  $("#form-container").removeClass("hide");
+}

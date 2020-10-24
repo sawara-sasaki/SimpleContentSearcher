@@ -24,3 +24,23 @@ body {
   margin-top: 20px;
   width: 100%;
 }
+#floating-button {
+  position: fixed;
+  bottom: 1em;
+  right:0;
+}
+#form-container {
+  position: fixed;
+  bottom: 1em;
+  width: 100vw;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+}
+#url-input {
+  width: calc(100% - 7em);
+  margin: 0 1em;
+}
+#url-button {
+  width: 5em;
+}

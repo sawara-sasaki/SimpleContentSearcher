@@ -40,6 +40,17 @@
         </div>
       </div>
     </div>
+    <div id="floating-button">
+      <div class="btn btn-primary" onclick="OpenForm(this)">
+        <i class="fa fa-chevron-up" aria-hidden="true"></i>
+      </div>
+    </div>
+    <div id="form-container" class="hide">
+      <input id="url-input" type="text" class="form-control" autocomplete="on">
+      <div id="url-button" class="btn btn-primary" onclick="Go();">
+        Go
+      </div>
+    </div>
     <script>
     var videoId = ""
     var qSearch = window.location.search;
