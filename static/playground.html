@@ -34,8 +34,8 @@ body {
   width: 100% !important;
 }
 #sub-container {
-  margin-top: 20px;
-  width: 100%;
+  margin: 20px auto;
+  width: calc(100% - 5em);
 }
 #url-button {
   cursor: pointer;
@@ -67,16 +67,19 @@ body {
       </div>
     </div>
     <div id="sub-container">
-      <div id="message-info-container" class="alert alert-info hide" role="alert">
+      <div id="message-container" class="alert alert-info hide" role="alert">
         <form>
           <div class="form-check">
             <input class="form-check-input" type="checkbox" id="auto-play">
             <label class="form-check-label" for="autoplay">Auto Play</label>
           </div>
         </form>
+        <div id="message">
+        </div>
       </div>
     </div>
     <script>
+    var player;
     var videoId = ""
     var qSearch = window.location.search;
     if (qSearch.startsWith('?https://www.youtube.com/watch?v=')) {
@@ -97,6 +100,70 @@ body {
         }
       }
     }
+    var addUrlList = function(url) {
+      var urlList = getUrlList();
+      urlList.unshift(url);
+      setUrlList(urlList);
+      appendMessage([url]);
+    };
+    var getNextUrl = function() {
+      var nextUrl = "";
+      var urlList = getUrlList();
+      if (urlList.length > 0) {
+        nextUrl = urlList[0];
+        urlList.shift();
+        setUrlList(urlList);
+      }
+      return nextUrl;
+    };
+    var getUrlList = function() {
+      var urlList = [];
+      var jsonString = localStorage.getItem("urlList");
+      if (!!jsonString && jsonString.length > 0) {
+        urlList = JSON.parse(jsonString);
+      }
+      return urlList;
+    };
+    var setUrlList = function(urlList) {
+      localStorage.setItem('urlList', JSON.stringify(urlList));
+    };
+    var refreshMessage = function() {
+      clearMessage();
+      appendMessage(getUrlList());
+    };
+    var clearMessage = function() {
+      document.getElementById("message").innerHTML = '';
+    };
+    var appendMessage = function(urlList) {
+      var messageElement = document.getElementById("message");
+      urlList.forEach(v => {
+        var p = document.createElement("p");
+        var a = document.createElement("a");
+        a.textContent = v;
+        a.href= "./playground.html?" + v;
+        p.append(a);
+        messageElement.append(p);
+      });
+    };
+    var autoPlayCheck = document.getElementById("auto-play");
+    if (localStorage.getItem("autoPlay") == "true") {
+      autoPlayCheck.checked = true;
+    } else {
+      autoPlayCheck.checked = false;
+    }
+    autoPlayCheck.onchange = function() {
+      localStorage.setItem('autoPlay', autoPlayCheck.checked);
+    };
+    var Go = function() {
+      var urlInput = document.getElementById("url-input");
+      if (videoId.length > 0) {
+        addUrlList(urlInput.value);
+        urlInput.value = "";
+      } else {
+        var urlInput = document.getElementById("url-input");
+        location.href = "./playground.html?" + urlInput.value;
+      }
+    };
     if (videoId.length > 0) {
       var playerContainer = document.getElementById("player-container");
       playerContainer.style.display = 'block';
@@ -104,7 +171,7 @@ body {
       tag.src = "https://www.youtube.com/player_api";
       var firstScriptTag = document.getElementsByTagName('script')[0];
       firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
-      var player;
+      refreshMessage();
       function onYouTubePlayerAPIReady() {
         player = new YT.Player('ytplayer', {
           height: '360',
@@ -126,22 +193,14 @@ body {
         }
       }
       function playNext() {
-        console.log("play next");
+        if (localStorage.getItem("autoPlay") == "true") {
+          var nextUrl = getNextUrl();
+          if (nextUrl.length > 0) {
+            location.href = "./playground.html?" + nextUrl;
+          }
+        }
       }
     }
-    var autoPlayCheck = document.getElementById("auto-play");
-    if (localStorage.getItem("autoPlay") == "true") {
-      autoPlayCheck.checked = true;
-    } else {
-      autoPlayCheck.checked = false;
-    }
-    autoPlayCheck.onchange = function() {
-      localStorage.setItem('autoPlay', autoPlayCheck.checked);
-    };
-    var Go = function() {
-      var urlInput = document.getElementById("url-input");
-      location.href = "./player.html?" + urlInput.value;
-    };
     </script>
   </body>
 </html>
