@@ -19,7 +19,7 @@ body {
 #player-container {
   margin: 0 auto;
   width: 100%;
-  display: none;
+  background-color: #000;
 }
 #player-content {
   padding-top: 56.25%;
@@ -67,42 +67,16 @@ body {
       </div>
     </div>
     <div id="sub-container">
-      <div id="message-container" class="alert alert-info hide" role="alert">
-        <form>
-          <div class="form-check">
-            <input class="form-check-input" type="checkbox" id="auto-play">
-            <label class="form-check-label" for="autoplay">Auto Play</label>
-          </div>
-        </form>
+      <div id="message-container">
         <div id="message">
         </div>
       </div>
     </div>
     <script>
     var player;
-    var videoId = ""
-    var qSearch = window.location.search;
-    if (qSearch.startsWith('?https://www.youtube.com/watch?v=')) {
-      videoId = qSearch.substring(33).split('&')[0];
-    } else {
-      var qObject = new Object();
-      if(qSearch){
-        qSearch = qSearch.substring(1);
-        var param = qSearch.split('&');
-        for (var i = 0; i < param.length; i++) {
-          var el = param[i].split('=');
-          var pName = decodeURIComponent(el[0]);
-          var pValue = decodeURIComponent(el[1]);
-          qObject[pName] = pValue;
-        }
-        if (!!qObject["v"] && qObject["v"].length > 0) {
-          videoId = qObject["v"];
-        }
-      }
-    }
     var addUrlList = function(url) {
       var urlList = getUrlList();
-      urlList.unshift(url);
+      urlList.push(url);
       setUrlList(urlList);
       appendMessage([url]);
     };
@@ -140,65 +114,75 @@ body {
         var p = document.createElement("p");
         var a = document.createElement("a");
         a.textContent = v;
-        a.href= "./playground.html?" + v;
+        a.href = "#";
+        a.onclick = "refreshPlayer(v);return false;";
         p.append(a);
         messageElement.append(p);
       });
     };
-    var autoPlayCheck = document.getElementById("auto-play");
-    if (localStorage.getItem("autoPlay") == "true") {
-      autoPlayCheck.checked = true;
-    } else {
-      autoPlayCheck.checked = false;
-    }
-    autoPlayCheck.onchange = function() {
-      localStorage.setItem('autoPlay', autoPlayCheck.checked);
+    var autoPlay = function() {
+      if (!!player && !!player.getPlayerState && player.getPlayerState() == -1) {
+        player.playVideo();
+      }
+      setTimeout(function() {
+        autoPlay();
+      }, 1000);
     };
     var Go = function() {
       var urlInput = document.getElementById("url-input");
-      if (videoId.length > 0) {
-        addUrlList(urlInput.value);
-        urlInput.value = "";
+      addUrlList(urlInput.value);
+      urlInput.value = "";
+      if (!!player && !!player.getPlayerState && player.getPlayerState() == 1) {
+        console.log('Add url list. This url will play later.');
       } else {
-        var urlInput = document.getElementById("url-input");
-        location.href = "./playground.html?" + urlInput.value;
+        location.reload();
       }
     };
-    if (videoId.length > 0) {
-      var playerContainer = document.getElementById("player-container");
-      playerContainer.style.display = 'block';
+    function initPlayer(videoId) {
+      player = new YT.Player('ytplayer', {
+        height: '360',
+        width: '640',
+        videoId: videoId,
+        playerVars: {
+          'autoplay': 1,
+        },
+        events: {
+          'onReady': onPlayerReady,
+          'onStateChange': onPlayerStateChange,
+        }
+      });
+    }
+    function onPlayerReady(event) {
+      event.target.playVideo();
+    }
+    function onPlayerStateChange(event) {
+      var ytStatus = event.data;
+      if (ytStatus == YT.PlayerState.ENDED) {
+        refreshPlayer(getNextUrl());
+      }
+    }
+    function refreshPlayer(nextUrl) {
+      if (nextUrl.length > 0) {
+        var videoId = nextUrl.substring(32).split('&')[0];
+        var contentElement = document.getElementById("player-content");
+        contentElement.innerHTML = '';
+        var divElement = document.createElement("div");
+        divElement.id = 'ytplayer';
+        contentElement.append(divElement);
+        player = null;
+        initPlayer(videoId);
+        refreshMessage();
+      }
+    }
+    if (getUrlList().length > 0) {
+      var videoId = getNextUrl().substring(32).split('&')[0];
       var tag = document.createElement('script');
       tag.src = "https://www.youtube.com/player_api";
       var firstScriptTag = document.getElementsByTagName('script')[0];
       firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
       refreshMessage();
       function onYouTubePlayerAPIReady() {
-        player = new YT.Player('ytplayer', {
-          height: '360',
-          width: '640',
-          videoId: videoId,
-          events: {
-            'onReady': onPlayerReady,
-            'onStateChange': onPlayerStateChange,
-          }
-        });
-      }
-      function onPlayerReady(event) {
-        event.target.playVideo();
-      }
-      function onPlayerStateChange(event) {
-        var ytStatus = event.data;
-        if (ytStatus == YT.PlayerState.ENDED) {
-          playNext();
-        }
-      }
-      function playNext() {
-        if (localStorage.getItem("autoPlay") == "true") {
-          var nextUrl = getNextUrl();
-          if (nextUrl.length > 0) {
-            location.href = "./playground.html?" + nextUrl;
-          }
-        }
+        initPlayer(videoId);
       }
     }
     </script>
