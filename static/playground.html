@@ -15,6 +15,7 @@ body {
   -ms-flex-align: center;
   align-items: center;
   background-color: #f5f5f5;
+  overflow-y: hidden;
 }
 #player-container {
   margin: 0 auto;
@@ -38,7 +39,17 @@ body {
   width: calc(100% - 5em);
 }
 #message {
+  max-height: calc(100vh - 55vw - 110px);
   overflow-y: scroll;
+  -webkit-flex-wrap: wrap;
+  -ms-flex-wrap: wrap;
+  flex-wrap: wrap;
+  display: flex;
+}
+#message > div{
+  width: 120px;
+  height: 90px;
+  margin: 5px;
 }
 #url-button {
   cursor: pointer;
@@ -121,15 +132,15 @@ body {
     var appendMessage = function(urlList) {
       var messageElement = document.getElementById("message");
       urlList.forEach(v => {
-        var p = document.createElement("p");
+        var div = document.createElement("div");
         var a = document.createElement("a");
         var img = document.createElement("img");
         img.src = "https://img.youtube.com/vi/" + v.substring(32).split('&')[0] + "/default.jpg";
         a.href = "#";
         a.onclick = "refreshPlayer(v);return false;";
         a.append(img);
-        p.append(a);
-        messageElement.append(p);
+        div.append(a);
+        messageElement.append(div);
       });
     };
     var autoPlay = function() {
