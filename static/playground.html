@@ -37,6 +37,9 @@ body {
   margin: 20px auto;
   width: calc(100% - 5em);
 }
+#message {
+  overflow-y: scroll;
+}
 #url-button {
   cursor: pointer;
 }
@@ -74,11 +77,18 @@ body {
     </div>
     <script>
     var player;
+    var youTubePlayerAPIReady = false;
+    var tag = document.createElement('script');
+    tag.src = "https://www.youtube.com/player_api";
+    var firstScriptTag = document.getElementsByTagName('script')[0];
+    firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+    var onYouTubePlayerAPIReady = function () {
+      youTubePlayerAPIReady = true;
+    };
     var addUrlList = function(url) {
       var urlList = getUrlList();
       urlList.push(url);
       setUrlList(urlList);
-      appendMessage([url]);
     };
     var getNextUrl = function() {
       var nextUrl = "";
@@ -113,9 +123,11 @@ body {
       urlList.forEach(v => {
         var p = document.createElement("p");
         var a = document.createElement("a");
-        a.textContent = v;
+        var img = document.createElement("img");
+        img.src = "https://img.youtube.com/vi/" + v.substring(32).split('&')[0] + "/default.jpg";
         a.href = "#";
         a.onclick = "refreshPlayer(v);return false;";
+        a.append(img);
         p.append(a);
         messageElement.append(p);
       });
@@ -130,15 +142,16 @@ body {
     };
     var Go = function() {
       var urlInput = document.getElementById("url-input");
-      addUrlList(urlInput.value);
+      var url = urlInput.value;
       urlInput.value = "";
       if (!!player && !!player.getPlayerState && player.getPlayerState() == 1) {
-        console.log('Add url list. This url will play later.');
+        addUrlList(url);
+        appendMessage([url]);
       } else {
-        location.reload();
+        waitForAPIReady(url);
       }
     };
-    function initPlayer(videoId) {
+    var initPlayer = function(videoId) {
       player = new YT.Player('ytplayer', {
         height: '360',
         width: '640',
@@ -151,17 +164,8 @@ body {
           'onStateChange': onPlayerStateChange,
         }
       });
-    }
-    function onPlayerReady(event) {
-      event.target.playVideo();
-    }
-    function onPlayerStateChange(event) {
-      var ytStatus = event.data;
-      if (ytStatus == YT.PlayerState.ENDED) {
-        refreshPlayer(getNextUrl());
-      }
-    }
-    function refreshPlayer(nextUrl) {
+    };
+    var refreshPlayer = function(nextUrl) {
       if (nextUrl.length > 0) {
         var videoId = nextUrl.substring(32).split('&')[0];
         var contentElement = document.getElementById("player-content");
@@ -174,16 +178,26 @@ body {
         refreshMessage();
       }
     }
-    if (getUrlList().length > 0) {
-      var videoId = getNextUrl().substring(32).split('&')[0];
-      var tag = document.createElement('script');
-      tag.src = "https://www.youtube.com/player_api";
-      var firstScriptTag = document.getElementsByTagName('script')[0];
-      firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
-      refreshMessage();
-      function onYouTubePlayerAPIReady() {
-        initPlayer(videoId);
+    var onPlayerReady = function(event) {
+      event.target.playVideo();
+    }
+    var onPlayerStateChange = function(event) {
+      var ytStatus = event.data;
+      if (ytStatus == YT.PlayerState.ENDED) {
+        refreshPlayer(getNextUrl());
       }
+    }
+    var waitForAPIReady = function(url) {
+      if (youTubePlayerAPIReady) {
+        refreshPlayer(url);
+      } else {
+        setTimeout(function() {
+          waitForAPIReady(url);
+        }, 1000);
+      }
+    };
+    if (getUrlList().length > 0) {
+      waitForAPIReady(getNextUrl());
     }
     </script>
   </body>
