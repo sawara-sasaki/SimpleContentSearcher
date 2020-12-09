@@ -96,46 +96,49 @@ body {
     var onYouTubePlayerAPIReady = function () {
       youTubePlayerAPIReady = true;
     };
-    var addUrlList = function(url) {
-      var urlList = getUrlList();
-      urlList.push(url);
-      setUrlList(urlList);
+    var addVideoIdList = function(videoId) {
+      var videoIdList = getVideoIdList();
+      videoIdList.push(videoId);
+      setVideoIdList(videoIdList);
     };
-    var getNextUrl = function() {
-      var nextUrl = "";
-      var urlList = getUrlList();
-      if (urlList.length > 0) {
-        nextUrl = urlList[0];
-        urlList.shift();
-        setUrlList(urlList);
+    var getNextVideoId = function() {
+      var nextVideoId = "";
+      var videoIdList = getVideoIdList();
+      if (videoIdList.length > 0) {
+        nextVideoId = videoIdList[0];
+        videoIdList.shift();
+        setVideoIdList(videoIdList);
       }
-      return nextUrl;
+      return nextVideoId;
     };
-    var getUrlList = function() {
-      var urlList = [];
-      var jsonString = localStorage.getItem("urlList");
+    var getVideoIdList = function() {
+      var videoIdList = [];
+      var jsonString = localStorage.getItem("videoIdList");
       if (!!jsonString && jsonString.length > 0) {
-        urlList = JSON.parse(jsonString);
+        videoIdList = JSON.parse(jsonString);
       }
-      return urlList;
+      return videoIdList;
     };
-    var setUrlList = function(urlList) {
-      localStorage.setItem('urlList', JSON.stringify(urlList));
+    var setVideoIdList = function(videoIdList) {
+      localStorage.setItem('videoIdList', JSON.stringify(videoIdList));
+    };
+    var getVideoIdFromUrl = function(url) {
+      return url.split('?')[1].split('&')[0].split('=')[1];
     };
     var refreshMessage = function() {
       clearMessage();
-      appendMessage(getUrlList());
+      appendMessage(getVideoIdList());
     };
     var clearMessage = function() {
       document.getElementById("message").innerHTML = '';
     };
-    var appendMessage = function(urlList) {
+    var appendMessage = function(videoIdList) {
       var messageElement = document.getElementById("message");
-      urlList.forEach(v => {
+      videoIdList.forEach(v => {
         var div = document.createElement("div");
         var a = document.createElement("a");
         var img = document.createElement("img");
-        img.src = "https://img.youtube.com/vi/" + v.substring(32).split('&')[0] + "/default.jpg";
+        img.src = "https://img.youtube.com/vi/" + v + "/default.jpg";
         a.href = "#";
         a.onclick = "refreshPlayer(v);return false;";
         a.append(img);
@@ -153,13 +156,13 @@ body {
     };
     var Go = function() {
       var urlInput = document.getElementById("url-input");
-      var url = urlInput.value;
+      var videoId = getVideoIdFromUrl(urlInput.value);
       urlInput.value = "";
       if (!!player && !!player.getPlayerState && player.getPlayerState() == 1) {
-        addUrlList(url);
-        appendMessage([url]);
+        addVideoIdList(videoId);
+        appendMessage([videoId]);
       } else {
-        waitForAPIReady(url);
+        waitForAPIReady(videoId);
       }
     };
     var initPlayer = function(videoId) {
@@ -167,25 +170,22 @@ body {
         height: '360',
         width: '640',
         videoId: videoId,
-        playerVars: {
-          'autoplay': 1,
-        },
         events: {
           'onReady': onPlayerReady,
           'onStateChange': onPlayerStateChange,
+          'onError': onPlayerError,
         }
       });
     };
-    var refreshPlayer = function(nextUrl) {
-      if (nextUrl.length > 0) {
-        var videoId = nextUrl.substring(32).split('&')[0];
+    var refreshPlayer = function(nextVideoId) {
+      if (nextVideoId.length > 0) {
         var contentElement = document.getElementById("player-content");
         contentElement.innerHTML = '';
         var divElement = document.createElement("div");
         divElement.id = 'ytplayer';
         contentElement.append(divElement);
         player = null;
-        initPlayer(videoId);
+        initPlayer(nextVideoId);
         refreshMessage();
       }
     }
@@ -195,20 +195,23 @@ body {
     var onPlayerStateChange = function(event) {
       var ytStatus = event.data;
       if (ytStatus == YT.PlayerState.ENDED) {
-        refreshPlayer(getNextUrl());
+        refreshPlayer(getNextVideoId());
       }
     }
-    var waitForAPIReady = function(url) {
+    var onPlayerError = function(event) {
+      console.log(event.data);
+    }
+    var waitForAPIReady = function(videoId) {
       if (youTubePlayerAPIReady) {
-        refreshPlayer(url);
+        refreshPlayer(videoId);
       } else {
         setTimeout(function() {
-          waitForAPIReady(url);
+          waitForAPIReady(videoId);
         }, 1000);
       }
     };
-    if (getUrlList().length > 0) {
-      waitForAPIReady(getNextUrl());
+    if (getVideoIdList().length > 0) {
+      waitForAPIReady(getNextVideoId());
     }
     </script>
   </body>
