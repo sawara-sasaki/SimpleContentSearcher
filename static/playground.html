@@ -47,9 +47,11 @@ body {
   display: flex;
 }
 #message > div{
+  position: relative;
   width: 120px;
   height: 90px;
   margin: 5px;
+  cursor: pointer;
 }
 #url-button {
   cursor: pointer;
@@ -65,6 +67,19 @@ body {
   margin-top: 20px;
   flex-direction: row;
   justify-content: center;
+}
+.remove-button {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 30px;
+  height: 30px;
+  text-align: center;
+  font-size: 1.15em;
+  color: #FFF;
+  cursor: pointer;
+  border-radius: 50%;
+  background-color: #F07;
 }
     </style>
   </head>
@@ -96,10 +111,17 @@ body {
     var onYouTubePlayerAPIReady = function () {
       youTubePlayerAPIReady = true;
     };
-    var addVideoIdList = function(videoId) {
+    var addVideoId = function(videoId) {
       var videoIdList = getVideoIdList();
       videoIdList.push(videoId);
       setVideoIdList(videoIdList);
+    };
+    var removeVideoId = function(videoId) {
+      var videoIdList = getVideoIdList();
+      setVideoIdList(videoIdList.reduce(function(a, c){
+        if(c != videoId) a.push(c);
+        return a;
+      }, []));
     };
     var getNextVideoId = function() {
       var nextVideoId = "";
@@ -136,13 +158,20 @@ body {
       var messageElement = document.getElementById("message");
       videoIdList.forEach(v => {
         var div = document.createElement("div");
-        var a = document.createElement("a");
         var img = document.createElement("img");
         img.src = "https://img.youtube.com/vi/".concat(v, "/default.jpg");
-        a.href = "#";
-        a.onclick = "refreshPlayer(v);return false;";
-        a.append(img);
-        div.append(a);
+        div.append(img);
+        div.id = v;
+        div.onclick = function() {
+          removeVideoId(v);
+          refreshPlayer(v);
+        };
+        div.onmouseover = function() {
+          mouseOver(v);
+        };
+        div.onmouseleave = function() {
+          mouseLeave();
+        }
         messageElement.append(div);
       });
     };
@@ -159,7 +188,7 @@ body {
       var videoId = getVideoIdFromUrl(urlInput.value);
       urlInput.value = "";
       if (!!player && !!player.getPlayerState && player.getPlayerState() == 1) {
-        addVideoIdList(videoId);
+        addVideoId(videoId);
         appendMessage([videoId]);
       } else {
         waitForAPIReady(videoId);
@@ -176,6 +205,24 @@ body {
           'onError': onPlayerError,
         }
       });
+    };
+    var mouseOver = function(videoId) {
+      var element = document.getElementById(videoId);
+      if(element.lastElementChild.className == "remove-button") {
+        return;
+      }
+      var div = document.createElement("div");
+      div.className = "remove-button";
+      div.innerHTML = '&times;';
+      div.onclick = function(event) {
+        event.stopPropagation();
+        removeVideoId(videoId);
+        refreshMessage();
+      }
+      element.append(div);
+    };
+    var mouseLeave = function(videoId) {
+      document.getElementsByClassName("remove-button")[0].remove();
     };
     var refreshPlayer = function(nextVideoId) {
       if (nextVideoId.length > 0) {
