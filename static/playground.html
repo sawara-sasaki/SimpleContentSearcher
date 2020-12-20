@@ -46,15 +46,29 @@ body {
   flex-wrap: wrap;
   display: flex;
 }
-#message > div{
+#message > div {
   position: relative;
+  width: 135px;
+  height: 105px;
+  margin: 5px;
+  cursor: pointer;
+}
+#message > div > img {
+  position: absolute;
+  bottom: 0;
+  left: 0;
   width: 120px;
   height: 90px;
-  margin: 5px;
   cursor: pointer;
 }
 #url-button {
   cursor: pointer;
+  padding: 5px 15px;
+  border: solid;
+  border-radius: 3px;
+  border-color: #999;
+  border-width: thin;
+  background-color: #DDD;
 }
 #url-input {
   width: calc(100% - 7em);
